@@ -2,5 +2,5 @@
 // 구글 스크립트 웹 앱 주소(…/exec 로 끝나는 주소)를 아래 따옴표 사이에 붙여 넣으세요.
 // 비워 두면 기록이 그 기기 안에만 저장돼요(미리보기 방식).
 window.ESCAPE_CONFIG = {
-  SCRIPT_URL: ""
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz0rVdMRKnkPFcUJZ_KHyDu3fN9BAA-w8v4krlIXn61m-O6-vdYlkwf5gJ55vNe-VYLOQ/exec"
 };
