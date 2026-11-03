@@ -362,6 +362,7 @@ var HINTS = [
 function fresh(){
   return {wall:1,items:[],sel:null,f:{},adv:[],chest:[0,0,0],bells:[],socks:0,hintLv:{},hintsUsed:0,left:TOTAL,running:false,timer:null};
 }
+var POST_S=0.5, POST_IN=0.14, POST_CAP=0.6, POST_BASE=0.74;
 
 var animating=false;
 var S;
@@ -760,9 +761,13 @@ function initGL(){
   // 코너 나무 기둥과 천장 보 (벽 사이의 이음선을 가린다)
   var postMat=new THREE.MeshBasicMaterial({map:loadTex(IMG_PILLAR,1,5,aniso,true)}), capMat=new THREE.MeshBasicMaterial({map:loadTex(IMG_PILLAR,1,0.25,aniso,true)});
   var trimMat=new THREE.MeshBasicMaterial({map:loadTex(IMG_TRIM,0,0,aniso)}), blockers=[];
-  [[-L/2,-L/2],[L/2,-L/2],[L/2,L/2],[-L/2,L/2]].forEach(function(p){
-    var m=new THREE.Mesh(new THREE.BoxGeometry(0.64,H,0.64),postMat); m.position.set(p[0],H/2,p[1]); scene.add(m); blockers.push(m);
-    var cap=new THREE.Mesh(new THREE.BoxGeometry(0.86,0.26,0.86),capMat); cap.position.set(p[0],0.13,p[1]); scene.add(cap); blockers.push(cap);
+  // 모서리 몰딩: 얇게 모서리에 붙이고, 바닥몰딩 윗선(POST_BASE)에서 끝낸다. POST_BASE가 없으면 예전 모양(바닥까지 내려오는 기둥).
+  var PS=(typeof POST_S==="number"?POST_S:0.64), PI=(typeof POST_IN==="number"?POST_IN:0.32), CS=(typeof POST_CAP==="number"?POST_CAP:0.86);
+  var YB=(typeof POST_BASE==="number")?H*(1-POST_BASE/(1-WALL_CROP)):0;
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(sg){
+    var px=sg[0]*(L/2+PS/2-PI), pz=sg[1]*(L/2+PS/2-PI);
+    var m=new THREE.Mesh(new THREE.BoxGeometry(PS,H-YB,PS),postMat); m.position.set(px,YB+(H-YB)/2,pz); scene.add(m); blockers.push(m);
+    if(YB<=0){ var cap=new THREE.Mesh(new THREE.BoxGeometry(CS,0.26,CS),capMat); cap.position.set(px,0.13,pz); scene.add(cap); blockers.push(cap); }
   });
   [[0,-L/2,0],[0,L/2,0],[-L/2,0,Math.PI/2],[L/2,0,Math.PI/2]].forEach(function(p){
     var m=new THREE.Mesh(new THREE.BoxGeometry(L,0.42,0.42),trimMat); m.position.set(p[0],H-0.21,p[1]); m.rotation.y=p[2]; scene.add(m); blockers.push(m);
@@ -954,6 +959,13 @@ function initGL(){
     start:function(){ if(!running){ running=true; last=0; requestAnimationFrame(loop); } },
     reset:function(){ yaw=0; pitch=0; pos.x=0; pos.z=0; magLevel=0; magMul=1; focusOn=false; focusMul=1; userScale=1; fovCur=targetFov(); camera.fov=fovCur; camera.updateProjectionMatrix(); tween=null; step=null; lastDir=0; rotV=0; vel.y=vel.p=0; keyL=keyR=false; held.U=held.D=false; pend.U=pend.D=false; },
     intro:function(){ var y0=yaw,p0=pitch; GL.reset(); yaw=y0; pitch=p0; introY0=y0; introP0=p0; introMul=1.34; introT0=performance.now(); introOn=true; fovCur=targetFov(); camera.fov=fovCur; camera.updateProjectionMatrix(); },
+    reloadRoom:function(){
+      fl.material.map=loadTex(IMG_FLOOR,0,0,aniso); fl.material.needsUpdate=true;
+      ce.material.map=loadTex(IMG_CEIL,0,0,aniso); ce.material.needsUpdate=true;
+      trimMat.map=loadTex(IMG_TRIM,0,0,aniso); trimMat.needsUpdate=true;
+      for(var i=0;i<4;i++) keys[i]=""; refresh();
+    },
+    setYaw:function(y,p){ yaw=y; pitch=p||0; pos.x=0; pos.z=0; magLevel=0; focusOn=false; tween=null; step=null; lastDir=0; },
     setWall:function(w){ yaw=(w-1)*Math.PI/2; pitch=0; pos.x=0; pos.z=0; magLevel=0; focusOn=false; tween=null; step=null; lastDir=0; },
     turnTo:function(w){
       var target=(w-1)*Math.PI/2; target+=2*Math.PI*Math.round((yaw-target)/(2*Math.PI));
@@ -1300,7 +1312,7 @@ function startTimer(){ S.running=true; S.timer=setInterval(tick,1000); }
 function stopTimer(){ S.running=false; clearInterval(S.timer); }
 
 function begin(){
-  animating=false; S=fresh(); S.wall=1; if(GL) GL.intro(); startMusic();
+  animating=false; S=fresh(); S.wall=1; if(typeof onNewGame==="function") onNewGame(); if(GL) GL.intro(); startMusic();
   $("#timer").textContent=fmt(TOTAL); $("#timer").classList.remove("low");
   $("#end").classList.add("hidden"); closeModal(); $("#start").classList.add("hidden");
   msg(INTRO_MSG);
