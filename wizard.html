@@ -234,6 +234,18 @@ table.cipher td b{color:var(--accent)}
 .recbox th,.recbox td{padding:2px 6px;text-align:left}
 .recbox tr.me{background:rgba(255,196,60,.4);font-weight:bold}
 
+
+/* ===== 말풍선·가방 배치: 고정 숫자 대신 한 묶음(dock)으로 쌓아서, 가방 줄 수가 달라져도 겹치지 않는다 ===== */
+.dock{position:absolute;z-index:6;left:0;right:0;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 12px;pointer-events:none}
+.dock .msg{position:relative;left:auto;bottom:auto;transform:none;display:none;pointer-events:none;max-width:100%;box-sizing:border-box}
+.dock .msg.show{display:block;opacity:.95;transform:none;animation:msgIn .22s ease-out}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:.95;transform:none}}
+.dock .inv{position:relative;left:auto;bottom:auto;transform:none;pointer-events:auto;max-width:100%;box-sizing:border-box;max-height:min(36vh,230px);overflow-y:auto;overscroll-behavior:contain}
+@media (max-width:900px){ .app.mode3d .dock{bottom:calc(12px + 124px + env(safe-area-inset-bottom,0px))} }
+@media (max-width:900px) and (orientation:landscape){ .app.mode3d .dock{bottom:calc(8px + env(safe-area-inset-bottom,0px));left:196px;right:196px;padding:0} .dock .inv{max-height:min(46vh,190px)} }
+/* 높이가 낮은 화면(작은 폰 세로, 폰 가로)에서는 가방 칸과 글자를 줄여서 위쪽 메뉴와 부딪치지 않게 한다 */
+@media (max-height:640px){ .dock{gap:8px} .dock .item{min-width:54px;padding:3px 4px;font-size:11px} .dock .item .ic{font-size:20px} .dock .inv{padding:6px 7px;gap:5px;max-height:min(26vh,150px)} .dock .msg{font-size:13.5px;padding:8px 12px;line-height:1.45} }
+@media (max-width:900px) and (orientation:landscape){ .dock .msg{font-size:13.5px;padding:7px 12px} .dock .item{min-width:54px;padding:3px 4px;font-size:11px} .dock .item .ic{font-size:20px} .dock .inv{padding:6px 7px;gap:5px} }
 </style>
 </head>
 <body>
@@ -258,8 +270,10 @@ table.cipher td b{color:var(--accent)}
     </div>
   </header>
 
-  <div class="msg" id="msg" role="status" aria-live="polite"></div>
-  <div class="inv" id="inv"></div>
+  <div class="dock" id="dock">
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    <div class="inv" id="inv"></div>
+  </div>
 
   <div class="zoombtns" id="zoombtns">
     <button class="pb" id="zoomIn" aria-label="돋보기로 확대" title="돋보기 확대 (+)"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="13" cy="13" r="8"/><path d="M19.5 19.5L28 28M13 9v8M9 13h8"/></svg></button>
